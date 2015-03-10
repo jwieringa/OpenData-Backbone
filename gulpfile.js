@@ -4,15 +4,6 @@
 var gulp = require('gulp');
 var plugins = require('gulp-load-plugins')();
 
-// For loading gulp-aws.json
-var fs = require('fs');
-
-// For publishing to S3
-var awspublish = require('gulp-awspublish');
-
-// For setting S3 caching rules in S3 based on routes
-var awspublishRouter = require('gulp-awspublish-router');
-
 var karma = require('karma').server;
 
 gulp.task('styles', function() {
@@ -213,6 +204,23 @@ gulp.task('test', function (done) {
   }, function (exitStatus) { done(); });
 });
 
+
+
+
+
+
+// Additions for S3 Deployment
+
+// For loading gulp-aws.json
+var fs = require('fs');
+
+// For publishing to S3
+var awspublish = require('gulp-awspublish');
+
+// For setting S3 caching rules in S3 based on routes
+var awspublishRouter = require('gulp-awspublish-router');
+
+
 // Publish to S3
 gulp.task('publish', [ 'build' ], function () {
   // cache config options with https://github.com/jussi-kalliokoski/gulp-awspublish-router
@@ -264,8 +272,13 @@ gulp.task('publish', [ 'build' ], function () {
   return gulp.src('dist/**/*')
     // gulp-awspublish-router defines caching and other options
     .pipe(awspublishRouter(cacheConfig))
+
+    // Publish the files
+    .pipe(publisher.publish())
+
     // create a cache file to speed up consecutive uploads
     .pipe(publisher.cache())
+
     // print upload updates to console
     .pipe(awspublish.reporter());
 });
