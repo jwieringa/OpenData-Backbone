@@ -7,3 +7,5 @@ test/specRunner.html
 dist
 app/scripts/compiled-templates.js
 test/coverage
+gulp-aws.json
+.awspublish*

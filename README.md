@@ -1,4 +1,5 @@
 # OpenData-Backbone
+
 A sample application demonstrating how an application might be built against the Open Data API using Backbone.js and Marionette.js.
 
 # Prerequisites
@@ -12,6 +13,18 @@ A sample application demonstrating how an application might be built against the
 2. `npm install`
 3. `bower install`
 4. `gulp serve`
+
+# S3 Deployment
+0. Follow setup instructions
+0. Create S3 Bucket
+  * Enable Website Hosting
+  * Set default index document to `index.html`
+  * Set default error docuement to `404.html`
+0. `cp gulp-aws.json.example gulp.aws.json`
+0. Fill in AWS credentials
+0. Fill in bucket name
+0. `gulp publish`
+0. Visit S3 Website host
 
 # Roadmap
 Not a roadmap in the sense that these are features that will *definitely* be implemented; more of a list of potential improvements

@@ -4,6 +4,15 @@
 var gulp = require('gulp');
 var plugins = require('gulp-load-plugins')();
 
+// For loading gulp-aws.json
+var fs = require('fs');
+
+// For publishing to S3
+var awspublish = require('gulp-awspublish');
+
+// For setting S3 caching rules in S3 based on routes
+var awspublishRouter = require('gulp-awspublish-router');
+
 var karma = require('karma').server;
 
 gulp.task('styles', function() {
@@ -12,7 +21,7 @@ gulp.task('styles', function() {
   var sassPaths = ['./bower_components/bootstrap-sass-official/assets/stylesheets'];
   return gulp.src('app/styles/main.scss')
     .pipe(plugins.plumber())
-    .pipe(plugins.sass({includePaths: sassPaths, errLogToConsole: true })) 
+    .pipe(plugins.sass({includePaths: sassPaths, errLogToConsole: true }))
     .pipe(plugins.autoprefixer({browsers: ['last 1 version']}))
     .pipe(gulp.dest('.tmp/styles'));
 });
@@ -71,7 +80,7 @@ gulp.task('html', ['styles'], function () {
 
     //replace the filenames rev'ed in the html file
     //.pipe( plugins.revReplace() )
-    
+
     //dump to dist
     .pipe( gulp.dest('dist'));
 });
@@ -204,3 +213,59 @@ gulp.task('test', function (done) {
   }, function (exitStatus) { done(); });
 });
 
+// Publish to S3
+gulp.task('publish', [ 'build' ], function () {
+  // cache config options with https://github.com/jussi-kalliokoski/gulp-awspublish-router
+  var cacheConfig = {
+    cache: {
+      //cache for 5 minutes by default (html...)
+      cacheTime: 300
+    },
+    routes: {
+      '\.(json)$': {
+        // use gzip for assets that benefit from it
+        gzip: true,
+        //24 hours
+        cacheTime: 86400
+      },
+
+      '\.(js|css)$': {
+        // use gzip for assets that benefit from it
+        gzip: true,
+        //js and css is rev'd so cache it for a year
+        cacheTime: 31536000
+      },
+
+      '\.(svg)$': {
+        // use gzip for assets that benefit from it
+        gzip: true,
+        //1 year
+        cacheTime: 31536000
+      },
+
+      '\.(png|jpg|jpeg|gif|swf|eot|ttf|woff)$': {
+        //images, fonts, and swf (zeroclipboard) get cached for a year, if you want to change one you need to change the name!
+        //js and css is rev'd so cache it for a year
+        cacheTime: 31536000
+      },
+
+      // pass-through for anything that wasn't matched by routes above, to be uploaded with default options
+      '^.+$': '$&'
+    }
+  };
+
+  // Read the aws config file
+  var json = fs.readFileSync('gulp-aws.json');
+  // Parse the JSON from the config file
+  var aws = JSON.parse(json);
+  // Create awspublish object
+  var publisher = awspublish.create(aws);
+
+  return gulp.src('dist/**/*')
+    // gulp-awspublish-router defines caching and other options
+    .pipe(awspublishRouter(cacheConfig))
+    // create a cache file to speed up consecutive uploads
+    .pipe(publisher.cache())
+    // print upload updates to console
+    .pipe(awspublish.reporter());
+});
